@@ -4,6 +4,7 @@ import random
 import time
 from typing import List, Dict, Optional
 import os
+import urllib.parse
 
 st.set_page_config(
     page_title="NPS Park Guessing Game",
@@ -223,6 +224,89 @@ def reset_game():
         'game_over': False
     })
 
+def create_bug_report_url(title: str, description: str, labels: str = "bug") -> str:
+    """
+    Create a pre-filled git issue URL
+    """
+    github_repo = "rthurmes/np-worlde" 
+    
+    issue_body = f"""**Bug Description:**
+{description}
+
+**Steps to Reproduce:**
+1. 
+2. 
+3. 
+
+**Expected Behavior:**
+
+
+**Actual Behavior:**
+
+
+**Browser/Device Info:**
+- Browser: 
+- Device: 
+- Operating System: 
+
+**Additional Context:**
+Add any other context about the problem here.
+
+---
+*This issue was created via the in-app bug report feature.*
+"""
+    
+    # URL encode the parameters
+    params = {
+        'title': title,
+        'body': issue_body,
+        'labels': labels
+    }
+    
+    # Create the GitHub issue URL
+    base_url = f"https://github.com/{github_repo}/issues/new"
+    query_string = urllib.parse.urlencode(params)
+    return f"{base_url}?{query_string}"
+
+def show_bug_report_form():
+    """Display the bug report form in the sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.header("🐛 Report a Bug")
+    
+    with st.sidebar.expander("Found an issue? Let us know!"):
+        # Bug report form
+        bug_title = st.text_input(
+            "Bug Title",
+            placeholder="e.g., Wrong park selected when typing 'Glacier'"
+        )
+        
+        bug_description = st.text_area(
+            "Describe the bug",
+            placeholder="What happened? What did you expect to happen?",
+            height=100
+        )
+        
+        bug_type = st.selectbox(
+            "Bug Type",
+            ["General Bug", "Matching Issue", "Direction/Distance Wrong", "Image Problem", "Performance Issue"]
+        )
+        
+        if st.button("Create Bug Report", width='stretch'):
+            if bug_title and bug_description:
+                # Create the GitHub issue URL
+                full_title = f"[{bug_type}] {bug_title}"
+                issue_url = create_bug_report_url(full_title, bug_description)
+                
+                # Show success message and link
+                st.success("Bug report created! Click the link below to submit it on GitHub:")
+                st.markdown(f"[🔗 Submit Bug Report on GitHub]({issue_url})")
+                
+                # Also show the URL in case the link doesn't work
+                st.code(issue_url, language=None)
+                
+            else:
+                st.error("Please fill in both the title and description.")
+
 def main():
     # Title and description
     st.title("NPS Park Guessing Game")
@@ -237,6 +321,9 @@ def main():
         help="Get your free API key from https://developer.nps.gov/get-started.htm",
         type="password"
     )
+    
+    # Add bug report form to sidebar
+    show_bug_report_form()
     
     initialize_game_state()
     
