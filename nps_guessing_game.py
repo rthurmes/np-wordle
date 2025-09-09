@@ -5,14 +5,12 @@ import time
 from typing import List, Dict, Optional
 import os
 
-# Configure page
 st.set_page_config(
     page_title="NPS Park Guessing Game",
     page_icon="🏞️",
     layout="wide"
 )
 
-# Constants
 NPS_API_BASE = "https://developer.nps.gov/api/v1"
 DEFAULT_API_KEY = "DEMO_KEY"  
 
@@ -79,21 +77,16 @@ def fetch_parks_data(api_key: str) -> List[Dict]:
 
 def calculate_distance_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
-    Calculate distance between two coordinates using Haversine formula.
-    Returns distance in miles.
+    distance between two coordinates in miles
     """
     import math
     
-    # Convert to radians
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     
-    # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
     a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
     c = 2 * math.asin(math.sqrt(a))
-    
-    # Radius of earth in miles
     r = 3959
     return c * r
 
@@ -104,7 +97,7 @@ def get_direction_arrow(lat1: float, lon1: float, lat2: float, lon2: float) -> s
     """
     import math
     
-    # Calculate bearing from point 1 to point 2
+    # bearing
     dlon = math.radians(lon2 - lon1)
     lat1_rad = math.radians(lat1)
     lat2_rad = math.radians(lat2)
@@ -116,7 +109,6 @@ def get_direction_arrow(lat1: float, lon1: float, lat2: float, lon2: float) -> s
     bearing = (bearing + 360) % 360
     
     
-    # Convert to 8-direction arrow (0° = North)
     if 337.5 <= bearing or bearing < 22.5:
         return "⬆️"  
     elif 22.5 <= bearing < 67.5:
@@ -144,11 +136,11 @@ def find_park_by_guess(guess: str, parks: List[Dict]) -> Optional[Dict]:
     """
     guess_lower = guess.lower().strip()
     
-    # If guess is too short, don't match anything
+    # ignore short bois
     if len(guess_lower) < 2:
         return None
     
-    # Common generic park words to exclude from matching
+    # common generic park words to exclude from matching. come back to this later. probably a better way
     generic_words = {
         'national', 'park', 'monument', 'memorial', 'historic', 'historical', 
         'site', 'area', 'preserve', 'reserve', 'recreation', 'seashore', 
@@ -156,33 +148,27 @@ def find_park_by_guess(guess: str, parks: List[Dict]) -> Optional[Dict]:
         'battlefield', 'cemetery', 'cemeteries', 'military', 'state'
     }
     
-    # Filter the user's guess to remove generic words
     guess_words = guess_lower.split()
     meaningful_guess_words = [word for word in guess_words if word not in generic_words]
     
-    # If no meaningful words in guess, don't match anything
     if not meaningful_guess_words:
         return None
     
-    # Collect all matching parks with their match scores
     matching_parks = []
-    
+    # this part is ranking based on matching words, so "glacier national park" will get a higher score than "glacier bay national park"
     for park in parks:
         park_name = park['name'].lower()
         
-        # Split park name into words and filter out generic words
         park_words = park_name.split()
         meaningful_park_words = [word for word in park_words if word not in generic_words]
         
-        # If no meaningful words left, skip this park
         if not meaningful_park_words:
             continue
         
-        # Check if all meaningful words from the guess are found in the park name
         matches_found = 0
         exact_matches = 0
         total_guess_words = len(meaningful_guess_words)
-        match_score = 0  # Higher score = better match
+        match_score = 0 
         
         for guess_word in meaningful_guess_words:
             word_matched = False
@@ -192,31 +178,25 @@ def find_park_by_guess(guess: str, parks: List[Dict]) -> Optional[Dict]:
                 if guess_word == park_word:
                     matches_found += 1
                     exact_matches += 1
-                    match_score += 100  # High score for exact matches
+                    match_score += 100
                     word_matched = True
                     break
             
-            # If no exact match, try partial matches
             if not word_matched:
                 for park_word in meaningful_park_words:
                     if len(park_word) >= 3 and guess_word in park_word and len(guess_word) >= 3:
                         matches_found += 1
-                        # Score based on how much of the word matches
                         match_ratio = len(guess_word) / len(park_word)
-                        match_score += int(50 * match_ratio)  # Lower score for partial matches
+                        match_score += int(50 * match_ratio)
                         word_matched = True
                         break
         
-        # If all words matched, add to candidates with match score
         if matches_found == total_guess_words and total_guess_words > 0:
-            # Bonus points for shorter park names (more specific)
             name_length_penalty = len(meaningful_park_words) * 5
             final_score = match_score - name_length_penalty
             matching_parks.append((park, exact_matches, final_score))
     
-    # Return the park with the highest match score
     if matching_parks:
-        # Sort by final score (descending), then by exact matches, then alphabetically
         matching_parks.sort(key=lambda x: (-x[2], -x[1], x[0]['name']))
         return matching_parks[0][0]
     
@@ -245,12 +225,12 @@ def reset_game():
 
 def main():
     # Title and description
-    st.title("🏞️ NPS Park Guessing Game")
-    st.markdown("**Guess the National Park from its image!** Similar to Worldle, but for nature lovers.")
+    st.title("NPS Park Guessing Game")
+    st.markdown("**Guess the National Park from its image!** Similar to Worldle, but for nps nerds (c)")
     st.markdown("You have 6 guesses to identify the park. After each guess, you'll get distance and direction clues.")
     
     # API Key input
-    st.sidebar.header("🔑 API Configuration")
+    st.sidebar.header("API Configuration")
     api_key = st.sidebar.text_input(
         "NPS API Key", 
         value=os.getenv('NPS_API_KEY', DEFAULT_API_KEY),
@@ -258,10 +238,8 @@ def main():
         type="password"
     )
     
-    # Initialize game state
     initialize_game_state()
     
-    # Fetch parks data
     if api_key:
         with st.spinner("Loading National Parks data..."):
             parks = fetch_parks_data(api_key)
@@ -270,14 +248,12 @@ def main():
             st.error("No park data available. Please check your API key and try again.")
             return
         
-        # Select a random park for the current game
         if not st.session_state.game_state['current_park']:
             st.session_state.game_state['current_park'] = random.choice(parks)
         
         current_park = st.session_state.game_state['current_park']
         game_state = st.session_state.game_state
         
-        # Display current park image
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -288,21 +264,17 @@ def main():
             )
         
         with col2:
-            # Game stats
             st.metric("Score", game_state['score'])
             st.metric("Streak", game_state['streak'])
             st.metric("Total Games", game_state['total_games'])
             
-            # New game button
-            if st.button("🔄 New Game", width='stretch'):
+            if st.button("New Game", width='stretch'):
                 reset_game()
                 st.rerun()
         
-        # Game interface
         if not game_state['game_over']:
             st.subheader("Make Your Guess")
             
-            # Guess input
             guess = st.text_input(
                 "Enter part of the park name:",
                 placeholder="e.g., Yellowstone, Grand Canyon, Acadia, Yosemite...",
@@ -314,11 +286,9 @@ def main():
             with col1:
                 if st.button("Submit Guess", width='stretch', type="primary"):
                     if guess:
-                        # Find matching park
                         guessed_park = find_park_by_guess(guess, parks)
                         
                         if guessed_park:
-                            # Calculate distance and direction
                             distance = calculate_distance_miles(
                                 guessed_park['coordinates']['lat'],
                                 guessed_park['coordinates']['lon'],
@@ -334,10 +304,8 @@ def main():
                             )
                             
                             
-                            # Check if correct
                             is_correct = (guessed_park['name'] == current_park['name'])
                             
-                            # Add to guesses
                             game_state['guesses'].append({
                                 'guess': guess,
                                 'park_name': guessed_park['name'],
@@ -396,7 +364,6 @@ def main():
                     else:
                         st.write("❌")
         
-        # Park information (revealed after game ends)
         if game_state['game_over']:
             st.subheader("🏞️ About This Park")
             st.write(f"**{current_park['name']}**")
