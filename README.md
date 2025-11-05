@@ -17,3 +17,5 @@ Feel free to submit issues, feature requests, or pull requests to improve the ga
 - **National Park Service** for providing the amazing API and data
 - **Worldle** for the inspiration and game mechanics
 - **Streamlit** for the excellent web app framework
+
+i have no affiliation with the national park service or wordle. im just vibin
