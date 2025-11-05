@@ -224,6 +224,7 @@ def fetch_parks_data(api_key: str) -> List[Dict]:
                     'name': park.get('fullName', 'Unknown Park'),
                     'park_code': park.get('parkCode', ''),
                     'description': park.get('description', ''),
+                    'designation': park.get('designation', 'Unknown'),  # Add park designation/type
                     'image_url': image.get('url', ''),
                     'image_alt': image.get('altText', ''),
                     'image_caption': image.get('caption', ''),
@@ -376,6 +377,32 @@ def find_park_by_guess(guess: str, parks: List[Dict]) -> Optional[Dict]:
     
     return None
 
+def get_unique_designations(parks: List[Dict]) -> List[str]:
+    """
+    Extract unique park designations from the parks list.
+    Returns a sorted list of unique designations.
+    """
+    designations = set()
+    for park in parks:
+        designation = park.get('designation', 'Unknown')
+        if designation and designation != 'Unknown':
+            designations.add(designation)
+    return sorted(list(designations))
+
+def filter_parks_by_designation(parks: List[Dict], selected_designations: List[str]) -> List[Dict]:
+    """
+    Filter parks based on selected designations.
+    If no designations are selected, returns all parks.
+    """
+    if not selected_designations:
+        return parks
+    
+    filtered = []
+    for park in parks:
+        if park.get('designation') in selected_designations:
+            filtered.append(park)
+    return filtered
+
 def initialize_game_state():
     """Initialize the game state in session state."""
     if 'game_state' not in st.session_state:
@@ -499,21 +526,51 @@ def main():
         type="password"
     )
     
-    # Add bug report form to sidebar
-    show_bug_report_form()
-    
     initialize_game_state()
     
     if api_key:
         with st.spinner("Loading National Parks data..."):
-            parks = fetch_parks_data(api_key)
+            all_parks = fetch_parks_data(api_key)
         
-        if not parks:
+        if not all_parks:
             st.error("No park data available. Please check your API key and try again.")
             return
         
-        if not st.session_state.game_state['current_park']:
+        # Get unique designations and create filter
+        st.sidebar.header("Park Type Filter")
+        unique_designations = get_unique_designations(all_parks)
+        
+        selected_designations = st.sidebar.multiselect(
+            "Select park types to include:",
+            options=unique_designations,
+            default=[],  # Empty by default - shows all parks
+            help="Select one or more park types. Leave empty to include all types."
+        )
+        
+        # Filter parks based on selected designations
+        parks = filter_parks_by_designation(all_parks, selected_designations)
+        
+        if not parks:
+            st.warning(f"No parks found matching the selected types: {', '.join(selected_designations)}. Please select different types or clear the selection.")
+            return
+        
+        # Show count of filtered parks
+        st.sidebar.info(f"**{len(parks)}** parks available with selected types")
+        
+        # Add bug report form to sidebar
+        show_bug_report_form()
+        
+        # Select a random park if none is selected, or if park type filter changed
+        current_park = st.session_state.game_state.get('current_park')
+        
+        if not current_park:
             st.session_state.game_state['current_park'] = random.choice(parks)
+        elif current_park not in parks:
+            # Current park is not in filtered list, select a new one
+            st.session_state.game_state['current_park'] = random.choice(parks)
+            # Reset guesses since we're switching to a different park
+            st.session_state.game_state['guesses'] = []
+            st.session_state.game_state['game_over'] = False
         
         current_park = st.session_state.game_state['current_park']
         game_state = st.session_state.game_state
