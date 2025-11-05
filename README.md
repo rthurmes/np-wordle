@@ -18,4 +18,4 @@ Feel free to submit issues, feature requests, or pull requests to improve the ga
 - **Worldle** for the inspiration and game mechanics
 - **Streamlit** for the excellent web app framework
 
-i have no affiliation with the national park service or wordle. im just vibin
+i have no affiliation with the national park service or wordle. im just havin fun🏄
