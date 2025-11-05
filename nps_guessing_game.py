@@ -9,8 +9,182 @@ import urllib.parse
 st.set_page_config(
     page_title="NPS Park Guessing Game",
     page_icon="🏞️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Add custom CSS for mobile responsiveness
+st.markdown("""
+<style>
+    /* Mobile-first responsive design */
+    @media (max-width: 768px) {
+        /* Main container adjustments */
+        .main .block-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        /* Title styling for mobile */
+        h1 {
+            font-size: 1.8rem !important;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Description text */
+        .description {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Image container for mobile */
+        .stImage > div {
+            text-align: center;
+        }
+        
+        .stImage img {
+            max-width: 100% !important;
+            height: auto !important;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Ensure custom metrics layout stays on one line */
+        div[style*="flex-wrap: nowrap"] {
+            flex-wrap: nowrap !important;
+        }
+        
+        /* Button styling for mobile */
+        .stButton > button {
+            width: 100% !important;
+            margin: 0.25rem 0;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stButton > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        /* Text input styling */
+        .stTextInput > div > div > input {
+            font-size: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .stTextInput > div > div > input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+        
+        /* Guess history styling */
+        .guess-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .guess-item.correct {
+            border-left-color: #4CAF50;
+            background: #e8f5e8;
+        }
+        
+        .guess-item.incorrect {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+        
+        /* Mobile-specific: dark text for better contrast on light backgrounds */
+        @media (max-width: 768px) {
+            .guess-item {
+                color: #1f1f1f !important;
+            }
+            
+            .guess-item strong {
+                color: #1f1f1f !important;
+            }
+            
+            .guess-item span {
+                color: #1f1f1f !important;
+            }
+        }
+        
+        /* Sidebar adjustments for mobile */
+        .css-1d391kg {
+            padding-top: 1rem;
+        }
+        
+        /* Park info section */
+        .park-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        
+        .park-info h3 {
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Success/error messages */
+        .stSuccess, .stError, .stWarning {
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        /* Loading spinner */
+        .stSpinner {
+            text-align: center;
+        }
+    }
+    
+    /* Desktop improvements */
+    @media (min-width: 769px) {
+        .stImage img {
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stButton > button {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stButton > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+    }
+    
+    /* General improvements */
+    .main-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .game-container {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
 
 NPS_API_BASE = "https://developer.nps.gov/api/v1"
 DEFAULT_API_KEY = "DEMO_KEY"  
@@ -24,10 +198,9 @@ def fetch_parks_data(api_key: str) -> List[Dict]:
     try:
         headers = {'X-Api-Key': api_key}
         
-        # Fetch parks with images and addresses
         params = {
             'fields': 'images,addresses',
-            'limit': 500  # Get more parks for variety
+            'limit': 700  
         }
         
         response = requests.get(f"{NPS_API_BASE}/parks", headers=headers, params=params)
@@ -299,7 +472,7 @@ def show_bug_report_form():
                 
                 # Show success message and link
                 st.success("Bug report created! Click the link below to submit it on GitHub:")
-                st.markdown(f"[🔗 Submit Bug Report on GitHub]({issue_url})")
+                st.markdown(f"[Submit Bug Report on GitHub]({issue_url})")
                 
                 # Also show the URL in case the link doesn't work
                 st.code(issue_url, language=None)
@@ -308,10 +481,14 @@ def show_bug_report_form():
                 st.error("Please fill in both the title and description.")
 
 def main():
-    # Title and description
+    # Title and description with mobile-friendly styling
+    st.markdown('<div class="main-header">', unsafe_allow_html=True)
     st.title("NPS Park Guessing Game")
+    st.markdown('<div class="description">', unsafe_allow_html=True)
     st.markdown("**Guess the National Park from its image!** Similar to Worldle, but for nps nerds (c)")
     st.markdown("You have 6 guesses to identify the park. After each guess, you'll get distance and direction clues.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # API Key input
     st.sidebar.header("API Configuration")
@@ -341,34 +518,49 @@ def main():
         current_park = st.session_state.game_state['current_park']
         game_state = st.session_state.game_state
         
-        col1, col2 = st.columns([2, 1])
+        # Image section (no container wrapper for cleaner look)
+        st.image(
+            current_park['image_url'], 
+            caption=f"Guess this National Park!",
+            width='stretch'  # Use stretch for responsive sizing
+        )
         
-        with col1:
-            st.image(
-                current_park['image_url'], 
-                caption=f"Guess this National Park!",
-                width='stretch'
-            )
+        # Metrics section with mobile-friendly layout (all on one line using custom HTML)
+        st.markdown(f'''
+        <div style="display: flex; justify-content: space-around; align-items: center; margin: 1rem 0; flex-wrap: nowrap;">
+            <div style="flex: 1; text-align: center; min-width: 0;">
+                <div style="font-size: 0.75rem; color: #888; margin-bottom: 0.25rem;">Score</div>
+                <div style="font-size: 1.5rem; font-weight: bold;">{game_state['score']}</div>
+            </div>
+            <div style="flex: 1; text-align: center; min-width: 0;">
+                <div style="font-size: 0.75rem; color: #888; margin-bottom: 0.25rem;">Streak</div>
+                <div style="font-size: 1.5rem; font-weight: bold;">{game_state['streak']}</div>
+            </div>
+            <div style="flex: 1; text-align: center; min-width: 0;">
+                <div style="font-size: 0.75rem; color: #888; margin-bottom: 0.25rem;">Games</div>
+                <div style="font-size: 1.5rem; font-weight: bold;">{game_state['total_games']}</div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
         
-        with col2:
-            st.metric("Score", game_state['score'])
-            st.metric("Streak", game_state['streak'])
-            st.metric("Total Games", game_state['total_games'])
-            
-            if st.button("New Game", width='stretch'):
-                reset_game()
-                st.rerun()
+        # New Game button
+        if st.button("New Game", width='stretch'):
+            reset_game()
+            st.rerun()
         
         if not game_state['game_over']:
             st.subheader("Make Your Guess")
             
+            # Mobile-friendly input section
             guess = st.text_input(
                 "Enter part of the park name:",
                 placeholder="e.g., Yellowstone, Grand Canyon, Acadia, Yosemite...",
-                key="guess_input"
+                key="guess_input",
+                help="Type any part of the park name to make your guess!"
             )
             
-            col1, col2 = st.columns([1, 1])
+            # Mobile-friendly button layout
+            col1, col2 = st.columns([2, 1])
             
             with col1:
                 if st.button("Submit Guess", width='stretch', type="primary"):
@@ -426,38 +618,42 @@ def main():
                     game_state['game_over'] = True
                     game_state['total_games'] += 1
         
-        # Display guess history
+        # Display guess history with mobile-friendly styling
         if game_state['guesses']:
             st.subheader("Your Guesses")
             
             for i, guess_data in enumerate(game_state['guesses'], 1):
-                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                # Create a styled guess item
+                guess_class = "correct" if guess_data['is_correct'] else "incorrect"
+                status_icon = "🎯" if guess_data['is_correct'] else "❌"
                 
-                with col1:
-                    if guess_data['is_correct']:
-                        st.success(f"✅ {i}. {guess_data['park_name']}")
-                    else:
-                        st.info(f"❌ {i}. {guess_data['park_name']}")
-                
-                with col2:
-                    st.write(f"{guess_data['distance']:.0f} mi")
-                
-                with col3:
-                    st.write(guess_data['direction'])
-                
-                with col4:
-                    if guess_data['is_correct']:
-                        st.write("🎯")
-                    else:
-                        st.write("❌")
+                st.markdown(f'''
+                <div class="guess-item {guess_class}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <strong>{status_icon} {i}. {guess_data['park_name']}</strong>
+                        </div>
+                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                            <span><strong>{guess_data['distance']:.0f} mi</strong></span>
+                            <span style="font-size: 1.2em;">{guess_data['direction']}</span>
+                        </div>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
         
         if game_state['game_over']:
             st.subheader("🏞️ About This Park")
-            st.write(f"**{current_park['name']}**")
+            
+            # Mobile-friendly park info section
+            st.markdown(f'''
+            <div class="park-info">
+                <h3>{current_park['name']}</h3>
+                {f'<p><strong>Location:</strong> {current_park["city"]}, {current_park["state"]}</p>' if current_park['city'] and current_park['state'] else ''}
+            </div>
+            ''', unsafe_allow_html=True)
+            
             if current_park['description']:
-                st.write(current_park['description'])
-            if current_park['city'] and current_park['state']:
-                st.write(f"📍 Located in {current_park['city']}, {current_park['state']}")
+                st.markdown(f"**Description:**\n\n{current_park['description']}")
     
     else:
         st.warning("Please enter your NPS API key to start playing!")
