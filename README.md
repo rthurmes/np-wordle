@@ -13,7 +13,7 @@ This project is for educational purposes. The National Park Service data is publ
 Feel free to submit issues, feature requests, or pull requests to improve the game!
 
 ## Deployment
-Currently deployed at https://nps-unit-guessing.streamlit.app
+Currently deployed at https://nps-unit-guessing.streamlit.app/?utm_source=github&utm_medium=readme
 
 ## Acknowledgments
 
