@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import requests
 import random
 import time
@@ -507,7 +508,27 @@ def show_bug_report_form():
             else:
                 st.error("Please fill in both the title and description.")
 
+def inject_analytics():
+    website_id = "5c5ca0ac-6164-49a0-8f16-9c29f3c76cb7"
+    components.html(f"""
+    <script>
+    (function() {{
+        var parent = window.parent;
+        if (!parent || !parent.document) return;
+        if (parent.document.querySelector('script[data-website-id="{website_id}"]')) return;
+        var s = parent.document.createElement('script');
+        s.src = 'https://cloud.umami.is/script.js';
+        s.setAttribute('data-website-id', '{website_id}');
+        s.defer = true;
+        parent.document.head.appendChild(s);
+    }})();
+    </script>
+    """, height=0)
+
+
 def main():
+    inject_analytics()
+
     # Title and description with mobile-friendly styling
     st.markdown('<div class="main-header">', unsafe_allow_html=True)
     st.title("NPS Park Guessing Game")
