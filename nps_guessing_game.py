@@ -508,6 +508,20 @@ def show_bug_report_form():
             else:
                 st.error("Please fill in both the title and description.")
 
+def track_event(name: str, data: dict = None):
+    import json
+    data_js = json.dumps(data) if data else "undefined"
+    components.html(f"""
+    <script>
+    (function() {{
+        var parent = window.parent;
+        if (!parent || !parent.umami) return;
+        parent.umami.track('{name}', {data_js});
+    }})();
+    </script>
+    """, height=0)
+
+
 def inject_analytics():
     website_id = "5c5ca0ac-6164-49a0-8f16-9c29f3c76cb7"
     components.html(f"""
@@ -671,12 +685,15 @@ def main():
                                 'is_correct': is_correct
                             })
                             
+                            track_event('guess-submitted', {'attempt': len(game_state['guesses']), 'correct': is_correct})
+
                             if is_correct:
                                 st.success(f"Correct! It's {current_park['name']}!")
                                 game_state['score'] += 1
                                 game_state['streak'] += 1
                                 game_state['game_over'] = True
                                 game_state['total_games'] += 1
+                                track_event('game-won', {'guesses': len(game_state['guesses'])})
                             else:
                                 st.warning(f"Not quite! You guessed {guessed_park['name']}")
                                 if len(game_state['guesses']) >= game_state['max_guesses']:
